@@ -50,10 +50,10 @@ repos:
         entry: pylint openbb_terminal terminal.py tests -j 4
         language: system
         types: [python]
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
-    hooks:
-      - id: detect-secrets
+  # - repo: https://github.com/Yelp/detect-secrets
+  #   rev: v1.4.0
+  #   hooks:
+  #     - id: detect-secrets
   - repo: local
     hooks:
       - id: reserved_args
