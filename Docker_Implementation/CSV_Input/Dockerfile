@@ -1,5 +1,6 @@
-FROM python:3.9
+FROM python:3-slim-buster
 WORKDIR /code
-COPY * /code/
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-COPY ./app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host=0.0.0.0","--port=80"]
