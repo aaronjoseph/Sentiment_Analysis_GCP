@@ -1,0 +1,46 @@
+variables:
+  PLAN: plan.tfplan
+  PLAN_JSON: tfplan.json
+  TF_ROOT: ${CI_PROJECT_DIR}
+  TERRAFORM_VERSION: "0.13.5"
+  AI_TEST_PROJECT_ID: "${dev_GCLOUD_PROJECT}"
+
+# Project Key Plans
+
+# ---------------------------------------------------------------------------- START ---------------------------------------------------------------------
+
+# Compute Project Proc
+# plan
+plan-compute-test:
+  stage: terraform-plan
+  script:
+    - echo `pwd`
+    - echo ${dev_AI_SERVICE_ACCOUNT_KEY} | base64 -di > key.json
+    - gcloud auth activate-service-account --key-file key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS="key.json"
+    - make project=${AI_TEST_PROJECT_ID} planname=${AI_TEST_PLAN} plan
+    - terraform show -no-color $AI_TEST_PLAN.tfplan > $AI_TEST_PLAN.txt
+    - terraform show -json -no-color $AI_TEST_PLAN.tfplan > $AI_TEST_PLAN.json
+  artifacts:
+    paths:
+      - $AI_TEST_PLAN.tfplan
+      - $AI_TEST_PLAN.txt
+      - $AI_TEST_PLAN.json
+      - project_configuration/${AI_TEST_PROJECT_ID}/cloud_functions/target/${AI_TEST_PROJECT_ID}-http_different_cloudfunction.zip
+      - project_configuration/${AI_TEST_PROJECT_ID}/cloud_functions/target/${AI_TEST_PROJECT_ID}-gcs_cloudfunction.zip
+      - project_configuration/${AI_TEST_PROJECT_ID}/cloud_functions/target/${AI_TEST_PROJECT_ID}-pipeline_trigger_proxy_function.zip
+      - project_configuration/${AI_TEST_PROJECT_ID}/cloud_functions/target/${AI_TEST_PROJECT_ID}-test-pubsub-function.zip
+  when: manual
+
+apply-compute-test:
+  stage: terraform-apply
+  needs: [plan-compute-test]
+  script:
+    - echo `pwd`
+    - echo ${TEST_AI_SERVICE_ACCOUNT_KEY} | base64 -di > key.json
+    - gcloud auth activate-service-account --key-file key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS="key.json"
+    - make project=${AI_TEST_PROJECT_ID} planname=${AI_TEST_PLAN} apply
+  only:
+    - master
+  when: manual

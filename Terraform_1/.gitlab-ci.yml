@@ -1,0 +1,34 @@
+include:
+  - '/ci-yaml/dev-project-id.yaml'
+
+image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+
+stages:
+  - pre-commit
+  - terraform-plan
+  - terraform-apply
+
+pre_commit:
+  stage: pre-commit
+  image: gcr.io/google.com/cloudsdktool/cloud-sdk:latest
+  script:
+    - tfswitch ${TERRAFORM_VERSION}
+    - pip install --upgrade pip
+    - pip install pre-commit commitizen 'checkov==2.0.608'
+    - git config --global url."https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.agile.nat.bt.com/".insteadOf "https://gitlab.agile.nat.bt.com/"
+    - pre-commit install
+    - pre-commit run --all-files
+  allow_failure: true
+
+default:
+  tags:
+    - {{ gitlab_runner }} #your-runner
+  before_script:
+    - export HTTP_PROXY=$PROXY
+    - export HTTPS_PROXY=$PROXY
+    - export NO_PROXY=$NO_PROXY
+    - curl -L https://raw.githubusercontent.com/warrensbox/terraform-switcher/release/install.sh | bash
+    - tfswitch ${TERRAFORM_VERSION}
+    - git config --global http.sslVerify "false"
+    - git config --global http.proxy ${PROXY}
+    - git config --global https.proxy ${PROXY}
